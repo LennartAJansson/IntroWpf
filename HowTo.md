@@ -224,7 +224,7 @@ public MainViewModel(IFolderService folderService)
 
 ## Adding properties to MainViewModel for the view
 
-Add a full property that holds an IEnumerable of strings for all folders and another full property that holds the selected folder. Note the usage of the Set method that is inherited from ViewModelBase:
+Add a full property that holds an IEnumerable of strings for all folders and another full property that holds the selected folder. Note the usage of the Set method that is inherited from ViewModelBase, this will make it possible to send messages to the view to invalidate itself and redraw its content:
 
 ```
 public IEnumerable<string> Folders
@@ -247,7 +247,7 @@ private string selectedFolder;
 
 ## Initializing the properties
 
-Initialize the property Folders in the method GetAllAsync:
+Initialize the property Folders in the method MainViewModel.GetAllAsync:
 
 ```
 public async Task GetAllAsync()
@@ -260,6 +260,12 @@ public async Task GetAllAsync()
 
 ## Start using the ViewModel from the view
 
+The property DataContext is found on all components in WPF, we could simplify by setting MainViewModel as the datacontext for the main window and it will be inherited by all components found in this window. But, it's also possible to assign a separate datacontext/viewmodel to one single component or a subset of components(like fx a UserControl). The main reason to use separate viewmodels is simply to create a distinct separation between various parts of the view. 
+
+Normally viewmodels aren't aware of each other, that's the isolation benefit we have from this kind of design. If, however, there's a need for some kind of communication between two viewmodels, then it could be solved by using registered events/delegates.  
+
+### Implement value bindings
+
 Remove the Grid element in MainWindow.xaml and replace with following xaml:
 
 ```
@@ -269,7 +275,67 @@ Remove the Grid element in MainWindow.xaml and replace with following xaml:
 </StackPanel>
 ```
 
-We have a Listbox that will be populated (ItemsSource) by its binding to Folders and it will set the selected folder by its binding of SelectedItem to SelectedFolder. 
+We have a Listbox that will be populated (ItemsSource) by its binding to Folders and it will set the selected folder by its binding of SelectedItem to SelectedFolder.  Things to explore further here is how bindings work, One-Way, Two-Way etc. There's a multitude of alternatives here. A hint is that it is possible to use bindings against visibility of a component and by that it's possible to get a more interactive view that changes behaviour based on the values in the viewmodel. I will add a sample of this kind of implementation later in this text.
 
-### 
+### Add command bindings
+
+When it comes to buttons and components that calls for actions we can bind the controls agains the RelayCommand class from MVVMLight. In the viewmodel add following readonly property:
+
+```public RelayCommand GetCommand { get; }```
+
+In the constructor, initialize it with following:
+
+```GetCommand = new RelayCommand(async () => await GetAllAsync());```
+
+This is the simplest form of RelayCommand, we assign the execute action to call the method GetAllAsync in the viewmodel. It's possible to add more parameters to RelayCommand constructor, one useful is the Func parameter where its possible to define if the control should be enabled or not (canExecute).
+
+If you have a button the binding against a RelayCommand should look like this:
+
+```<Button Command="{Binding GetCommand}" Content="Refresh" Width="120" Height="32" />``` 
+
+## A more complex binding example
+
+Let's say that we have a DataGrid with some content and we would like to be able to delete a row in the grid. One way is to add a button for each row where they all are bound to the same RelayCommand.
+
+Declare a RelayCommand property with <int> as valuetype, this defines that the RelayCommand will carry a parameter of type int:
+
+```public RelayCommand<int> DeleteCommand { get; }```
+
+Initialize it as usual and send the parameter named id along to your method DeleteAsync.
+
+```DeleteCommand = new RelayCommand<int>(async (int id) => await DeleteAsync(id));```
+
+The called method should look something like this:
+
+```
+private async Task DeleteAsync(int id)
+{
+    if (id != 0)
+    {
+        //Delete the item with this specific id
+    }
+}
+```
+
+In the xaml-code you bind the ItemsSource and SelectedItem of the DataGrid, you also bind the columns normally to the properties in each row. When it comes to the button column you have to use a template column for it and in the template you define a button that you bind with RelativeSource to the DataGrid (and by that to the DataContext of the DataGrid) and then define the Path to the RelayCommand in the viewmodel and then finally you bind the CommandParameter to the Id property of the item for that row. The CommandParameter will be sent automatically as a parameter to the RelayCommand.
+
+```
+<DataGrid Grid.Row="0" ItemsSource="{Binding Workloads}" SelectedItem="{Binding SelectedWorkload}"
+    ScrollViewer.VerticalScrollBarVisibility="Visible" AutoGenerateColumns="False" IsReadOnly="True">
+    <DataGrid.Columns>
+        <DataGridTextColumn Header="Id"  Binding="{Binding Id}"/>
+        <DataGridTextColumn Header="Person"  Binding="{Binding Person}"/>
+        <DataGridTemplateColumn Header="Delete" Width="auto" MinWidth="70">
+            <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                    <Button Width="60" Height="24" 
+                        Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}},
+                        Path=DataContext.DeleteCommand}" CommandParameter="{Binding Id}"
+                        Content="Delete" />
+                </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+    </DataGrid.Columns>
+</DataGrid>
+```
 

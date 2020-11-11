@@ -10,5 +10,6 @@
     <StackPanel Orientation="Vertical">
         <ListBox ItemsSource="{Binding Folders}" SelectedItem="{Binding SelectedFolder}" />
         <TextBox Width="120" Height="32" Text="{Binding SelectedFolder}" />
+        <Button Command="{Binding GetCommand}" Content="Refresh" Width="120" Height="32" />
     </StackPanel>
 </Window>

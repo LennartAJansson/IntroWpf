@@ -17,6 +17,7 @@ namespace WpfSample.ViewModels
         public static async Task<MainViewModel> GetMainViewModel()
         {
             MainViewModel vm = App.ServiceProvider.GetRequiredService<MainViewModel>();
+            //Simulate a press on the refresh button to initialize the property Folders
             await vm.GetAllAsync();
             return vm;
         }

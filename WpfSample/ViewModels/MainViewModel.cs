@@ -1,4 +1,5 @@
 ﻿using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.Command;
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -27,9 +28,12 @@ namespace WpfSample.ViewModels
 
         private string selectedFolder;
 
+        public RelayCommand GetCommand { get; }
+
         public MainViewModel(IFolderService folderService)
         {
             this.folderService = folderService;
+            GetCommand = new RelayCommand(async () => await GetAllAsync());
         }
 
         public async Task GetAllAsync()
