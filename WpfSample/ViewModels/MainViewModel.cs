@@ -38,7 +38,7 @@ namespace WpfSample.ViewModels
 
         public async Task GetAllAsync()
         {
-            Folders = await folderService.GetAllFoldersAsync(@"C:\Apps");
+            Folders = await folderService.GetAllFoldersAsync(@"C:\Windows");
         }
     }
 }
