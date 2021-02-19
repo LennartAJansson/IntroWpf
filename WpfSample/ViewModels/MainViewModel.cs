@@ -1,6 +1,8 @@
 ﻿using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 
+using Microsoft.Extensions.Logging;
+
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -10,6 +12,9 @@ namespace WpfSample.ViewModels
 {
     public class MainViewModel : ViewModelBase
     {
+        //Added logging
+        private readonly ILogger<MainViewModel> logger;
+
         private readonly IFolderService folderService;
 
         public IEnumerable<string> Folders
@@ -30,15 +35,21 @@ namespace WpfSample.ViewModels
 
         public RelayCommand GetCommand { get; }
 
-        public MainViewModel(IFolderService folderService)
+        //Added logging
+        public MainViewModel(ILogger<MainViewModel> logger, IFolderService folderService)
         {
+            this.logger = logger;
             this.folderService = folderService;
             GetCommand = new RelayCommand(async () => await GetAllAsync());
         }
 
         public async Task GetAllAsync()
         {
-            Folders = await folderService.GetAllFoldersAsync(@"C:\Windows");
+            var folder = @"C:\Repos";
+
+            //Added logging
+            logger.LogInformation("Getting all folders from {fldr}", folder);
+            Folders = await folderService.GetAllFoldersAsync(folder);
         }
     }
 }

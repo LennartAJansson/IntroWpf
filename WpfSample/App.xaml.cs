@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
+using Serilog;
+
 using System;
 using System.Windows;
 
@@ -16,11 +18,15 @@ namespace WpfSample
     public partial class App : Application
     {
         private readonly IHost host;
+
         public static IServiceProvider ServiceProvider { get; private set; }
 
         public App()
         {
             host = Host.CreateDefaultBuilder()
+
+                //Added logging
+                .UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration))
                 .ConfigureServices((context, services) => ConfigureAppServices(context, services))
                 .Build();
             ServiceProvider = host.Services;
